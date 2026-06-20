@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEO OS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{display:flex;height:100vh;overflow:hidden;font-family:'Inter','Segoe UI',system-ui,sans-serif;background:#0c0c10;color:#d9d5cc}
+a{color:inherit}
+
+/* Sidebar */
+#sidebar{width:214px;flex-shrink:0;background:#0f0f15;border-right:1px solid #1d1d2a;display:flex;flex-direction:column;height:100vh;overflow-y:auto;transition:width .2s}
+#sidebar.closed{width:0;overflow:hidden}
+#logo{padding:18px 18px 14px;border-bottom:1px solid #1d1d2a}
+#logo .name{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#b89050}
+#logo .date{font-size:10px;color:#5a586a;margin-top:3px}
+#year-bar{padding:14px 18px 10px;border-bottom:1px solid #1d1d2a}
+#year-bar .label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#5a586a;margin-bottom:7px}
+#year-bar .track{background:#1d1d2a;border-radius:2px;height:2px;overflow:hidden;margin-bottom:5px}
+#year-bar .fill{height:100%;background:#b89050;transition:width .5s}
+#year-bar .stats{display:flex;justify-content:space-between;font-size:10px;color:#5a586a}
+nav{flex:1;padding-bottom:20px}
+.nav-group-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5a586a;padding:14px 18px 4px}
+.nav-item{width:100%;display:flex;align-items:center;justify-content:space-between;padding:6px 18px 6px 16px;background:transparent;border:none;border-left:2px solid transparent;cursor:pointer;text-align:left;font-family:inherit;transition:background .1s;color:#88889a;font-size:13px}
+.nav-item:hover{background:#141420}
+.nav-item.active{background:#b8905014;border-left-color:#b89050;color:#d9d5cc}
+.nav-tag{font-size:9px;color:#5a586a;background:#1d1d2a;padding:1px 6px;border-radius:10px}
+#export-btn{margin:12px 18px;padding:7px 12px;background:transparent;border:1px solid #1d1d2a;border-radius:5px;color:#5a586a;font-size:11px;font-family:inherit;cursor:pointer;width:calc(100% - 36px);text-align:left}
+#export-btn:hover{border-color:#333}
+
+/* Main */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#header{padding:16px 32px 14px;border-bottom:1px solid #1d1d2a;display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;gap:16px}
+#menu-btn{background:none;border:none;color:#5a586a;cursor:pointer;font-size:17px;padding:0;line-height:1;flex-shrink:0;margin-top:1px}
+#header h1{font-size:18px;font-weight:600;letter-spacing:-.01em;margin:0;white-space:nowrap;color:#d9d5cc}
+#header-left{display:flex;flex-direction:column;min-width:0}
+#header-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#header-sub{font-size:11px;color:#5a586a;margin-top:4px;margin-left:27px;line-height:1.5}
+#save-badge{font-size:11px;color:#5a586a;margin-left:4px}
+#save-badge.saved{color:#4a7a5a}
+#current-date{font-size:12px;color:#b89050;font-weight:500;flex-shrink:0;margin-top:2px}
+
+/* Content */
+#content{flex:1;overflow-y:auto;padding:32px 40px 80px}
+#content-inner{max-width:720px;margin:0 auto}
+
+/* Past entries */
+.past-nav{margin-bottom:28px}
+.past-nav .past-label{font-size:10px;color:#5a586a;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.past-nav .pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{padding:3px 10px;border-radius:20px;border:1px solid #1d1d2a;background:transparent;color:#5a586a;font-size:11px;cursor:pointer;font-family:inherit}
+.pill:hover{border-color:#333;color:#9994a6}
+.pill.active{border-color:#b89050;background:#b8905018;color:#b89050}
+.pill.today{border-color:#b89050;background:#b8905018;color:#b89050}
+
+/* Banners */
+.banner{background:#b8905010;border:1px solid #b8905030;border-radius:6px;padding:10px 16px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#b89050}
+.banner button{font-size:11px;color:#b89050;background:none;border:none;cursor:pointer;font-family:inherit}
+.empty-banner{background:#14141c;border:1px solid #1d1d2a;border-radius:8px;padding:16px 20px;margin-bottom:28px;font-size:12px;color:#5a586a;line-height:1.7}
+
+/* Prompts */
+.prompt{margin-bottom:32px}
+.prompt-q{font-family:Georgia,'Times New Roman',serif;font-size:15px;color:#d9d5cc;margin-bottom:5px;line-height:1.4;font-style:italic}
+.prompt-h{font-size:12px;color:#5a586a;margin-bottom:10px;line-height:1.6}
+.field-wrap{position:relative}
+textarea{width:100%;background:#101018;border:1px solid #1d1d2a;border-radius:6px;padding:12px 44px 12px 14px;color:#d9d5cc;font-size:14px;line-height:1.75;font-family:'Inter','Segoe UI',system-ui,sans-serif;resize:vertical;outline:none;transition:border-color .15s}
+textarea:focus{border-color:#b8905055}
+textarea.recording{background:#0e0e1a;border-color:#ff6b6b44}
+textarea.recording.interim{color:#5a586a}
+.mic-btn{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:none;background:#1d1d2a;color:#5a586a;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+.mic-btn.active{background:#5a1010;color:#ff7070;animation:pulse 1.4s ease-in-out infinite}
+.interim-text{font-size:11px;color:#5a586a;margin-top:4px;font-style:italic;padding-left:2px}
+.voice-error{font-size:11px;color:#ff7070;margin-top:4px}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px #ff6b6b18}50%{box-shadow:0 0 0 8px #ff6b6b08}}
+
+/* Mobile */
+#mob-overlay{display:none;position:fixed;inset:0;z-index:100}
+#mob-overlay.open{display:flex}
+#mob-bg{position:absolute;inset:0;background:#00000088}
+#mob-sidebar{position:relative;z-index:1}
+@media(max-width:768px){
+  #sidebar{display:none}
+  #mob-overlay.open #sidebar{display:flex;width:214px}
+}
+</style>
+</head>
+<body>
+
+<!-- Mobile overlay -->
+<div id="mob-overlay">
+  <div id="mob-bg"></div>
+  <div id="mob-sidebar"></div>
+</div>
+
+<!-- Sidebar -->
+<div id="sidebar"></div>
+
+<!-- Main -->
+<div id="main">
+  <div id="header">
+    <div id="header-left">
+      <div id="header-top">
+        <button id="menu-btn">☰</button>
+        <h1 id="header-title"></h1>
+        <span id="save-badge"></span>
+      </div>
+      <div id="header-sub"></div>
+    </div>
+    <div id="current-date"></div>
+  </div>
+  <div id="content"><div id="content-inner"></div></div>
+</div>
+
+<script>
+// ─── Data ─────────────────────────────────────────────────────────
+const STORAGE_KEY = 'ceo_os_v1';
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveData(d) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+}
+
+// ─── Date helpers ─────────────────────────────────────────────────
+function isoToday() { return new Date().toISOString().slice(0, 10); }
+function weekKey() {
+  const d = new Date(), j = new Date(d.getFullYear(), 0, 1);
+  const w = Math.ceil(((d - j) / 86400000 + j.getDay() + 1) / 7);
+  return `${d.getFullYear()}-W${String(w).padStart(2, '0')}`;
+}
+function quarterKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-Q${Math.ceil((d.getMonth() + 1) / 3)}`;
+}
+function yearKey() { return String(new Date().getFullYear()); }
+
+function fmtKey(k) {
+  if (!k) return '';
+  if (k.includes('-W')) { const [y, w] = k.split('-W'); return `Week ${+w}, ${y}`; }
+  if (k.includes('-Q')) return k.replace('-Q', ' Q');
+  if (/^\d{4}$/.test(k)) return k;
+  const [y, m, d] = k.split('-');
+  return `${['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m]} ${+d}, ${y}`;
+}
+
+function yearProgress() {
+  const n = new Date(), day = Math.floor((n - new Date(n.getFullYear(), 0, 0)) / 86400000);
+  const tot = n.getFullYear() % 4 === 0 ? 366 : 365;
+  return { day, tot, pct: Math.round(day / tot * 100) };
+}
+
+// ─── State ────────────────────────────────────────────────────────
+const DATED = { daily: isoToday, weekly: weekKey, quarterly: quarterKey, annual: yearKey };
+
+const state = {
+  section: 'daily',
+  data: loadData(),
+  dkeys: { daily: isoToday(), weekly: weekKey(), quarterly: quarterKey(), annual: yearKey() },
+  voices: {}, // fieldKey -> SpeechRecognition instance
+};
+
+let saveTimer = null;
+function scheduleSave() {
+  const badge = document.getElementById('save-badge');
+  if (badge) { badge.textContent = 'saving…'; badge.className = ''; }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveData(state.data);
+    if (badge) { badge.textContent = '✓ saved'; badge.className = 'saved'; }
+    setTimeout(() => { if (badge) badge.textContent = ''; }, 2500);
+  }, 800);
+}
+
+function getValue(sec, key) {
+  if (DATED[sec]) return state.data[sec]?.[state.dkeys[sec]]?.[key] || '';
+  return state.data[sec]?.[key] || '';
+}
+
+function setValue(sec, key, val) {
+  if (DATED[sec]) {
+    const dk = state.dkeys[sec];
+    if (!state.data[sec]) state.data[sec] = {};
+    if (!state.data[sec][dk]) state.data[sec][dk] = {};
+    state.data[sec][dk][key] = val;
+  } else {
+    if (!state.data[sec]) state.data[sec] = {};
+    state.data[sec][key] = val;
+  }
+  scheduleSave();
+}
+
+// ─── Nav config ───────────────────────────────────────────────────
+const NAV = [
+  { g: 'Check-Ins', items: [
+    { id: 'daily', l: 'Daily', t: '5 min' },
+    { id: 'weekly', l: 'Weekly', t: '30 min' },
+    { id: 'quarterly', l: 'Quarterly', t: '2 hrs' },
+    { id: 'annual', l: 'Annual', t: 'Half day' },
+  ]},
+  { g: 'Interviews', items: [
+    { id: 'ip', l: 'Past Year' },
+    { id: 'ii', l: 'Identity & Values' },
+    { id: 'if', l: 'Future Self' },
+  ]},
+  { g: 'Frameworks', items: [
+    { id: 'fr', l: 'Annual Review' },
+    { id: 'fv', l: 'Vivid Vision' },
+    { id: 'fc', l: 'Life Costing' },
+    { id: 'fl', l: 'Life Map' },
+  ]},
+  { g: 'Goals', items: [
+    { id: 'g1', l: '1 Year' },
+    { id: 'g3', l: '3 Years' },
+    { id: 'g10', l: '10 Years' },
+  ]},
+  { g: 'Foundation', items: [
+    { id: 'pr', l: 'Principles' },
+    { id: 'ns', l: 'North Star' },
+    { id: 'mm', l: 'Memory' },
+  ]},
+];
+
+const META = {
+  daily:    { h: 'Daily Check-In',         s: '5 minutes · Before email · Every morning' },
+  weekly:   { h: 'Weekly Review',           s: '30 minutes · End of week' },
+  quarterly:{ h: 'Quarterly Review',        s: '2 hours · End of quarter · The most important meeting of your quarter' },
+  annual:   { h: 'Annual Review',           s: 'Half a day · Once a year' },
+  ip:       { h: 'Past Year Reflection',    s: 'A guided self-interview · Complete before your annual review' },
+  ii:       { h: 'Identity & Values',       s: 'Who you are and what you stand for · Update once a year' },
+  if:       { h: 'Future Self Interview',   s: 'A conversation with the version of you who has already figured it out' },
+  fr:       { h: 'Annual Review Framework', s: 'Adapted from Dr. Anthony Gustin · @dranthonygustin' },
+  fv:       { h: 'Vivid Vision',            s: 'Inspired by Tony Robbins · Present tense, 3 years out' },
+  fc:       { h: 'Ideal Life Costing',      s: 'Inspired by Tim Ferriss · @tferriss' },
+  fl:       { h: 'Life Map',                s: 'Inspired by Alex Lieberman · @businessbarista' },
+  g1:       { h: '1-Year Goals',            s: 'Decisions made in advance · Five to seven maximum' },
+  g3:       { h: '3-Year Goals',            s: 'Far enough to be ambitious · Close enough to feel real' },
+  g10:      { h: '10-Year Life Design',     s: 'Direction compounds' },
+  pr:       { h: 'Operating Principles',    s: 'How you operate at your best · Read when facing a hard decision' },
+  ns:       { h: 'North Star',              s: 'The document you read when you\'ve lost the thread' },
+  mm:       { h: 'Memory',                  s: 'The most important file in the system · Your running intelligence layer' },
+};
+
+// ─── Prompts ──────────────────────────────────────────────────────
+const P = {
+  daily: [
+    { k:'energy',   q:'Energy Level',              h:'Rate 1–10 and explain in one sentence. How are you showing up today, honestly?', r:2 },
+    { k:'win',      q:'One Meaningful Win',         h:'Business or personal, seen or unseen. Include quiet wins.' },
+    { k:'friction', q:'One Friction Point',         h:"What's creating drag? Name it clearly. You don't have to solve it here." },
+    { k:'letgo',    q:'One Thing to Let Go Of',     h:'A worry, a resentment, a task that belongs to someone else.' },
+    { k:'priority', q:'One Priority',               h:'Not the most urgent — the most important. The one that matters at 6pm.', r:2 },
+  ],
+  weekly: [
+    { k:'needle',  q:'What Actually Moved the Needle?', h:'Not what you did — what mattered.' },
+    { k:'noise',   q:'What Was Noise?',                  h:'What crowded out the important work?' },
+    { k:'leak',    q:'Where Did Time Leak?',              h:"Where did time go that you didn't consciously choose?" },
+    { k:'energy',  q:'Energy This Week',                  h:'Rate 1–10. Which days were strong? What was the cause?', r:2 },
+    { k:'insight', q:'One Strategic Insight',             h:'Something non-obvious about your market, team, or own behavior.' },
+    { k:'adjust',  q:'One Adjustment for Next Week',      h:'A specific change, not a goal.', r:2 },
+  ],
+  quarterly: [
+    { k:'title',   q:'Quarter in One Line',           h:'Give it a title. What was it, really?', r:2 },
+    { k:'goals',   q:'Goal Progress',                  h:'Go through your 1-year goals. What moved? What stalled? What did you drop?' },
+    { k:'align',   q:'Alignment Check',                h:'Working on what matters most, or what\'s most urgent?' },
+    { k:'energy',  q:'Energy vs. Output',              h:'What gave you the most energy? What drained you relative to output?' },
+    { k:'lm',      q:'Life Map Scores',                h:'Rate 1–10: Career / Relationships / Health / Meaning / Finances / Fun.' },
+    { k:'board',   q:'Personal Board',                 h:"Who's on it? Did you use them this quarter — real problems, honest input?" },
+    { k:'correct', q:'Course Correction',              h:'Starting, stopping, changing? One-word theme for next quarter?' },
+  ],
+  annual: [
+    { k:'title',    q:'Give This Year a Title',         h:"One phrase. Honest. 'The Year of Overextension.'", r:2 },
+    { k:'overview', q:'Year in Overview',               h:'Honest briefing — highlights and lowlights, no spin.' },
+    { k:'wins',     q:'Top Wins',                       h:'Five to ten. Include things no one else sees.' },
+    { k:'losses',   q:'Losses and Lessons',             h:'Three to five. Not to punish — to find the pattern.' },
+    { k:'domains',  q:'Domain Ratings',                 h:'Rate 1–10: Health / Career / Pro Relationships / Personal Relationships / Finances / Learning / Fun / Meaning.' },
+    { k:'pattern',  q:'What Pattern Followed You?',     h:'The same problem in different costumes.' },
+    { k:'release',  q:'What Are You Releasing?',        h:'A version of yourself. A strategy. Something that made sense in a different season.' },
+    { k:'next',     q:'Intent for Next Year',           h:'Not goals — the orientation. Then: three to five commitments, not hopes.' },
+  ],
+  ip: [
+    { k:'hi',  q:'Tell me about the last year. Highlights first.', h:"Don't structure it. Just talk." },
+    { k:'lo',  q:'Now the lowlights.',                              h:'What went sideways? What failed?' },
+    { k:'en',  q:'What gave you energy this year?',                h:'The work, the people, the moments.' },
+    { k:'dr',  q:'What drained you the most?',                     h:'The chronic drain. What kept costing more than it gave back?' },
+    { k:'av',  q:'Where did you avoid hard decisions?',            h:'With whom? About what?' },
+    { k:'kn',  q:"What did you know was true but spend the year pretending you didn't?", h:'Answer honestly, or leave it and come back tomorrow.' },
+    { k:'pr',  q:'What are you proud of that no one else sees?',   h:'The internal victories. The private discipline.' },
+    { k:'re',  q:'If this year repeated ten times, would you be satisfied?', h:'A blunt question. Answer directly.', r:2 },
+    { k:'rl',  q:'What are you carrying that you could put down?', h:'Resentments, responsibilities, identities. What is it time to release?' },
+  ],
+  ii: [
+    { k:'de', q:'How would you describe yourself — not your title, but you?', h:'The words that come before you edit them.' },
+    { k:'mo', q:'What do you care about more than most people in your position?', h:'' },
+    { k:'le', q:'What do you care about less?', h:'' },
+    { k:'ex', q:'What are you genuinely excellent at — not just competent?', h:'Things that feel effortless to you but seem hard to others.' },
+    { k:'ga', q:"What are you worse at than you'd like to admit?", h:'Not to criticize — to know yourself.' },
+    { k:'sa', q:'What have you sacrificed for?', h:'Your actual values are what you protect even when it\'s costly.' },
+    { k:'ms', q:'When do you feel most like yourself?', h:'The situations where you\'re most fully present.' },
+    { k:'ge', q:'What type of work do you do that no one else could do as well?', h:'Your zone of genius. Be specific.' },
+    { k:'pu', q:'What kind of leader do you become under pressure?', h:'Not who you want to be — who you actually become.' },
+    { k:'wl', q:'At your current stage, what does a well-lived year look like?', h:'Not successful. Well-lived.' },
+  ],
+  if: [
+    { k:'kn', q:'Future Self: What do you wish I knew right now?',         h:'Answer as your future self — 10 years older, 10 years wiser.' },
+    { k:'wo', q:'What did I waste time worrying about?',                   h:'' },
+    { k:'de', q:"What decision am I hesitating on that you'd tell me to make?", h:'Be specific.' },
+    { k:'st', q:'What should I stop doing?',                               h:'' },
+    { k:'sr', q:'What should I start doing that I keep putting off?',      h:'' },
+    { k:'wr', q:'What was I wrong about?',                                 h:'About yourself, the world, what success means.' },
+    { k:'co', q:'What is my company in your time? What happened?',         h:'' },
+    { k:'mi', q:'The most important thing you want me to understand right now.', h:'Let your future self answer this fully.', r:5 },
+    { k:'lt', q:'Write a short letter from your future self.',             h:'', r:6 },
+  ],
+  fr: [
+    { k:'ti', q:'Year Title',                            h:'One phrase.', r:2 },
+    { k:'he', q:'Health & Energy [1–10]',                h:'Did you treat yourself like an asset or an afterthought?' },
+    { k:'ca', q:'Career & Impact [1–10]',                h:'Did you operate in your zone of genius?' },
+    { k:'pr', q:'Professional Relationships [1–10]',     h:'Stronger than a year ago?' },
+    { k:'pe', q:'Personal Relationships [1–10]',         h:'Did the people who matter most experience your presence?' },
+    { k:'fi', q:'Finances [1–10]',                       h:'Intentional choices or reactive ones?' },
+    { k:'fu', q:'Fun, Rest & Enjoyment [1–10]',          h:'Did you actually enjoy the year?' },
+    { k:'me', q:'Meaning & Purpose [1–10]',              h:'Did the work feel like it mattered?' },
+    { k:'nx', q:'What Does Next Year Need to Be About?', h:'Not goals — the orientation. Then three to five commitments.' },
+  ],
+  fv: [
+    { k:'ho', q:"I'm writing my Vivid Vision for:",   h:'A date 3 years from now. Write below in present tense.', r:1 },
+    { k:'da', q:'My Daily Life',                       h:"A typical day. What time do you wake up? What are you not doing anymore?" },
+    { k:'wo', q:'My Work and Role',                    h:'What does your company look like? What is your specific role?' },
+    { k:'he', q:'My Health and Energy',               h:'What does your body feel like? What are your consistent practices?' },
+    { k:'re', q:'My Relationships',                    h:'What have your closest relationships become?' },
+    { k:'fi', q:'My Finances and Material Life',       h:'What have you stopped worrying about?' },
+    { k:'mi', q:'My Mind and Inner Life',              h:'What have you figured out? What are you no longer carrying?' },
+    { k:'fe', q:'The Feeling of It',                   h:'Three words: the emotional quality of your future life. Why those words?', r:2 },
+  ],
+  fc: [
+    { k:'wk', q:'Describe Your Ideal Ordinary Week',    h:'Not a vacation. Complete freedom. Day by day.' },
+    { k:'ho', q:'Housing (monthly)',                     h:'Mortgage, rent, utilities, maintenance.', r:2 },
+    { k:'fa', q:'Family (monthly)',                      h:'Childcare, school fees, family holidays.', r:2 },
+    { k:'he', q:'Health (monthly)',                      h:'Training, nutrition, healthcare, therapy.', r:2 },
+    { k:'ex', q:'Experiences & Enjoyment (monthly)',     h:'Holidays, dining, hobbies, culture.', r:2 },
+    { k:'sa', q:'Savings & Future (monthly)',            h:'Pension, emergency fund, investments.', r:2 },
+    { k:'to', q:'Total Monthly Cost of Your Ideal Life', h:'The number. Your current take-home. The gap.' },
+    { k:'fe', q:'What Are You Actually Trying to Feel?', h:'Security? Freedom? Ease? Is there a faster route to it?' },
+  ],
+  fl: [
+    { k:'ca', q:'Career & Professional Impact [1–10]',  h:'Is the company moving in a direction you believe in?' },
+    { k:'re', q:'Relationships [1–10]',                 h:"Not whether they exist — whether they're actually thriving." },
+    { k:'he', q:'Health [1–10]',                        h:'Often looks fine from outside and deteriorates quietly inside.' },
+    { k:'me', q:'Meaning [1–10]',                       h:'Do you still know why you\'re doing what you\'re doing?' },
+    { k:'fi', q:'Finances [1–10]',                      h:'Building toward the life you want?' },
+    { k:'fu', q:'Fun & Enjoyment [1–10]',               h:'Are you actually enjoying your life?' },
+    { k:'pa', q:'What Does the Pattern Tell You?',      h:'Where is your energy going? What are you neglecting?' },
+    { k:'lv', q:'Highest-Leverage Domain',              h:'Which domain, improved two points, ripples most into the others?' },
+    { k:'ac', q:'One Concrete Change in 90 Days',       h:'A specific action, not a plan.', r:2 },
+  ],
+  g1: [
+    { k:'g1', q:'Goal 1 — Professional', h:'What will be true when achieved? Why this year? How will you know?' },
+    { k:'g2', q:'Goal 2 — Professional', h:'Specific. Observable. Decided, not hoped.' },
+    { k:'g3', q:'Goal 3 — Professional', h:'What is the concrete evidence of success?' },
+    { k:'g4', q:'Goal 4 — Personal',     h:'Why does this goal matter this year?' },
+    { k:'g5', q:'Goal 5 — Personal',     h:'The one that might feel too personal for an official list.' },
+    { k:'no', q:"One Goal I'm NOT Setting This Year", h:'What are you deliberately not pursuing, to protect focus?', r:2 },
+    { k:'q1', q:'Q1 Progress', h:'', r:2 }, { k:'q2', q:'Q2 Progress', h:'', r:2 },
+    { k:'q3', q:'Q3 Progress', h:'', r:2 },
+    { k:'q4', q:'Year-End Assessment', h:'What did you achieve? What did you drop? What does the gap tell you?' },
+  ],
+  g3: [
+    { k:'or', q:'In Three Years, What Do You Want to Be True?', h:'Not just your business. Your life.' },
+    { k:'co', q:'Your Company at Year 3',     h:'Revenue, team, product, market position.' },
+    { k:'ro', q:'Your Role at Year 3',        h:'How has your role evolved? What are you not doing?' },
+    { k:'fi', q:'Financial Target',           h:'Specific enough to be useful.' },
+    { k:'pe', q:'Personal & Relationships',   h:'What have you invested in? What has grown?' },
+    { k:'wi', q:'One Wildcard Goal',          h:"The thing you want but haven't admitted to yet." },
+    { k:'su', q:'What Would Make This Period a Success?', h:'Not just professionally. The whole picture.' },
+  ],
+  g10: [
+    { k:'li', q:'In Ten Years, What Do You Want Your Life to Look Like?', h:"Write freely. Don't edit for realism." },
+    { k:'bu', q:'What Have You Built?',           h:'What exists because of you?' },
+    { k:'fa', q:'Family & Relationships',          h:'What have you given the people closest to you?' },
+    { k:'he', q:'Health & Vitality',               h:'What did you protect? What will you be grateful for?' },
+    { k:'me', q:'Meaning & Contribution',          h:'What question are you helping the world answer?' },
+    { k:'re', q:'What Would You Regret NOT Doing?',h:'80-year-old you, looking back.' },
+    { k:'su', q:'The One-Paragraph Summary',       h:'No hedging. No asterisks.', r:5 },
+  ],
+  pr: [
+    { k:'de', q:'How I Make Decisions',            h:'What do you always come back to?' },
+    { k:'pe', q:'How I Treat People',              h:'What does this mean, especially when it\'s inconvenient?' },
+    { k:'li', q:'What I Refuse to Compromise On', h:'Regardless of pressure or incentive.' },
+    { k:'di', q:'How I Handle Difficulty',         h:'What is your default posture?' },
+    { k:'le', q:'What I Owe the People I Lead',   h:'What do you want them to reliably get from you?' },
+    { k:'su', q:'What Success Actually Means to Me', h:'Not the public version.' },
+    { k:'ti', q:'My Relationship with Time',       h:'What do you want to protect? What are you done tolerating?' },
+    { k:'mo', q:'My Relationship with Money',      h:"What is it for? What's enough?" },
+    { k:'ol', q:'One-Line Summary',                h:'How you want to move through the world. For you, not a keynote.', r:2 },
+  ],
+  ns: [
+    { k:'bu', q:'What Am I Building?',             h:'Not just the company. The whole picture.' },
+    { k:'wh', q:'Why Does It Matter to Me?',       h:'Not the pitch. The real answer.' },
+    { k:'be', q:'What Kind of Person Am I Becoming?', h:'The work changes you. Who do you want to be at the end?' },
+    { k:'ch', q:'My Current Chapter',              h:'Give this season a name, then describe it in a few sentences.' },
+    { k:'op', q:'What Am I Optimizing For Right Now?', h:'Leverage? Freedom? Depth? Why this, right now?' },
+    { k:'rn', q:'Things I Would Regret NOT Doing', h:"Imagine you're 80, looking back." },
+    { k:'st', q:'My North Star Statement',         h:'One to three sentences. Plain language.', r:3 },
+  ],
+  mm: [
+    { k:'go', q:'Recurring Goals',                 h:'Year after year. Deepest priorities or most persistent avoidances.' },
+    { k:'st', q:'Recurring Strengths',             h:'What do people keep telling you? Where do you reliably perform?' },
+    { k:'bl', q:'Recurring Blind Spots',           h:'Where do you keep getting surprised?' },
+    { k:'fa', q:'Recurring Failure Patterns',      h:'Not the incidents — the pattern beneath them.' },
+    { k:'th', q:'Environments Where You Thrive',   h:'Conditions that bring out your sharpest thinking.' },
+    { k:'dr', q:'Environments That Drain You',     h:'Situations that consistently cost more than they return.' },
+    { k:'fi', q:"Things I've Already Figured Out (But Keep Forgetting)", h:'Write them here.' },
+    { k:'up', q:"Beliefs I've Updated",            h:'Old belief → New belief.' },
+    { k:'in', q:'Key Insights Log',                h:'Running log, reverse chronological. Date each one.' },
+    { k:'qu', q:"Questions I'm Sitting With",      h:'Not everything needs an answer. Some deserve to stay open.' },
+  ],
+};
+
+// ─── Voice ────────────────────────────────────────────────────────
+const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+function startVoice(sec, key, ta, micBtn) {
+  if (!SpeechAPI) return;
+  const fieldKey = sec + '__' + key;
+
+  // Stop if already recording
+  if (state.voices[fieldKey]) {
+    state.voices[fieldKey].stop();
+    return;
+  }
+
+  const r = new SpeechAPI();
+  r.continuous = true; r.interimResults = true; r.lang = 'en-US';
+  state.voices[fieldKey] = r;
+
+  ta.classList.add('recording');
+  micBtn.classList.add('active');
+  micBtn.textContent = '■';
+
+  let interimEl = ta.parentElement.querySelector('.interim-text');
+  if (!interimEl) {
+    interimEl = document.createElement('div');
+    interimEl.className = 'interim-text';
+    ta.parentElement.appendChild(interimEl);
+  }
+
+  r.onresult = e => {
+    let fin = '', int = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) fin += t; else int += t;
+    }
+    if (fin) {
+      const cur = getValue(sec, key);
+      const sep = cur && !cur.endsWith(' ') && !cur.endsWith('\n') ? ' ' : '';
+      const next = cur + sep + fin;
+      setValue(sec, key, next);
+      ta.value = next;
+      interimEl.textContent = '';
+    } else {
+      interimEl.textContent = int;
+    }
+  };
+
+  r.onerror = e => {
+    const errEl = ta.parentElement.querySelector('.voice-error') || document.createElement('div');
+    errEl.className = 'voice-error';
+    errEl.textContent = e.error === 'not-allowed' ? 'Mic access denied — check browser permissions.' : 'Error: ' + e.error;
+    ta.parentElement.appendChild(errEl);
+    stopVoice(sec, key, ta, micBtn);
+  };
+
+  r.onend = () => stopVoice(sec, key, ta, micBtn);
+  r.start();
+}
+
+function stopVoice(sec, key, ta, micBtn) {
+  const fieldKey = sec + '__' + key;
+  if (state.voices[fieldKey]) {
+    try { state.voices[fieldKey].stop(); } catch(e) {}
+    delete state.voices[fieldKey];
+  }
+  ta.classList.remove('recording');
+  micBtn.classList.remove('active');
+  micBtn.textContent = '🎙';
+  const interimEl = ta.parentElement.querySelector('.interim-text');
+  if (interimEl) interimEl.textContent = '';
+}
+
+// ─── Render ───────────────────────────────────────────────────────
+function renderSidebar(el) {
+  const yp = yearProgress();
+  el.innerHTML = `
+    <div id="logo">
+      <div class="name">CEO OS</div>
+      <div class="date">${new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' })}</div>
+    </div>
+    <div id="year-bar">
+      <div class="label">Year Progress</div>
+      <div class="track"><div class="fill" style="width:${yp.pct}%"></div></div>
+      <div class="stats"><span>Day ${yp.day} of ${yp.tot}</span><span>${yp.pct}% — ${yp.tot - yp.day} left</span></div>
+    </div>
+    <nav>
+      ${NAV.map(g => `
+        <div class="nav-group-label">${g.g}</div>
+        ${g.items.map(it => `
+          <button class="nav-item${state.section === it.id ? ' active' : ''}" data-id="${it.id}">
+            <span>${it.l}</span>
+            ${it.t ? `<span class="nav-tag">${it.t}</span>` : ''}
+          </button>
+        `).join('')}
+      `).join('')}
+    </nav>
+    <button id="export-btn">↓ Export data (JSON)</button>
+  `;
+
+  el.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => navigate(btn.dataset.id));
+  });
+  el.querySelector('#export-btn').addEventListener('click', exportData);
+}
+
+function renderHeader() {
+  const m = META[state.section] || { h: state.section, s: '' };
+  const isDated = !!DATED[state.section];
+  document.getElementById('header-title').textContent = m.h;
+  document.getElementById('header-sub').textContent = m.s;
+  document.getElementById('current-date').textContent = isDated ? fmtKey(state.dkeys[state.section]) : '';
+}
+
+function renderContent() {
+  const sec = state.section;
+  const prompts = P[sec] || [];
+  const isDated = !!DATED[sec];
+  const inner = document.getElementById('content-inner');
+  let html = '';
+
+  // Past entry navigation
+  if (isDated) {
+    const allKeys = Object.keys(state.data[sec] || {}).sort().reverse();
+    const cur = state.dkeys[sec];
+    const fresh = DATED[sec]();
+    if (allKeys.length > 0) {
+      html += `<div class="past-nav"><div class="past-label">Past Entries</div><div class="pills">
+        ${allKeys.slice(0, 8).map(k => `<button class="pill${k === cur ? ' active' : ''}" data-key="${k}">${fmtKey(k)}</button>`).join('')}
+        ${cur !== fresh ? `<button class="pill today" data-key="${fresh}">→ Today</button>` : ''}
+      </div></div>`;
+    }
+    if (cur !== fresh) {
+      html += `<div class="banner"><span>Viewing past entry — ${fmtKey(cur)}</span><button data-key="${fresh}">→ ${fmtKey(fresh)}</button></div>`;
+    } else if (!allKeys.includes(fresh) && prompts.length > 0) {
+      const msgs = {
+        daily: 'No entry for today yet. Answer the five prompts below — it takes five minutes.',
+        weekly: `New week: ${fmtKey(fresh)}. Block 30 minutes and work through these prompts.`,
+        quarterly: `${fmtKey(fresh)} — block two uninterrupted hours. The most important meeting of your quarter.`,
+        annual: `${fmtKey(fresh)} annual review. Take a morning somewhere quiet.`,
+      };
+      html += `<div class="empty-banner">${msgs[sec] || ''}</div>`;
+    }
+  }
+
+  // Prompts
+  prompts.forEach(p => {
+    const val = getValue(sec, p.k);
+    html += `
+      <div class="prompt">
+        <div class="prompt-q">${p.q}</div>
+        ${p.h ? `<div class="prompt-h">${p.h}</div>` : ''}
+        <div class="field-wrap">
+          <textarea rows="${p.r || 4}" data-sec="${sec}" data-key="${p.k}">${val.replace(/</g, '&lt;')}</textarea>
+          ${SpeechAPI ? `<button class="mic-btn" data-sec="${sec}" data-key="${p.k}" title="Speak your answer">🎙</button>` : ''}
+        </div>
+      </div>
+    `;
+  });
+
+  inner.innerHTML = html;
+
+  // Wire up events
+  inner.querySelectorAll('.pill, .banner button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (DATED[sec]) {
+        state.dkeys[sec] = btn.dataset.key;
+        renderAll();
+      }
+    });
+  });
+
+  inner.querySelectorAll('textarea').forEach(ta => {
+    ta.addEventListener('input', () => setValue(ta.dataset.sec, ta.dataset.key, ta.value));
+  });
+
+  inner.querySelectorAll('.mic-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ta = btn.previousElementSibling;
+      const fieldKey = btn.dataset.sec + '__' + btn.dataset.key;
+      if (state.voices[fieldKey]) stopVoice(btn.dataset.sec, btn.dataset.key, ta, btn);
+      else startVoice(btn.dataset.sec, btn.dataset.key, ta, btn);
+    });
+  });
+}
+
+function renderAll() {
+  // Stop any active voice sessions when navigating
+  Object.keys(state.voices).forEach(k => {
+    try { state.voices[k].stop(); } catch(e) {}
+  });
+  state.voices = {};
+
+  const sidebar = document.getElementById('sidebar');
+  renderSidebar(sidebar);
+
+  // Sync mobile sidebar
+  const mobSide = document.getElementById('mob-sidebar');
+  if (mobSide.children.length > 0) renderSidebar(mobSide.children[0]);
+
+  renderHeader();
+  renderContent();
+}
+
+function navigate(id) {
+  state.section = id;
+  document.getElementById('mob-overlay').classList.remove('open');
+  renderAll();
+}
+
+// ─── Export / Import ──────────────────────────────────────────────
+function exportData() {
+  const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ceo-os-${isoToday()}.json`;
+  a.click();
+}
+
+// ─── Menu ─────────────────────────────────────────────────────────
+document.getElementById('menu-btn').addEventListener('click', () => {
+  if (window.innerWidth < 768) {
+    const ov = document.getElementById('mob-overlay');
+    const ms = document.getElementById('mob-sidebar');
+    if (!ov.classList.contains('open')) {
+      ms.innerHTML = '<div id="sidebar" style="display:flex"></div>';
+      renderSidebar(ms.querySelector('#sidebar'));
+    }
+    ov.classList.toggle('open');
+  } else {
+    document.getElementById('sidebar').classList.toggle('closed');
+  }
+});
+
+document.getElementById('mob-bg').addEventListener('click', () => {
+  document.getElementById('mob-overlay').classList.remove('open');
+});
+
+// ─── Boot ─────────────────────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>
